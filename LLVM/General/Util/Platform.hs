@@ -1031,16 +1031,16 @@ mkAnyPlatformFromTriple t =
 getDefaultPlatform :: IO AnyPlatform
 getDefaultPlatform = 
   mkAnyPlatformFromTriple <$> parseTriple <$> 
-  catchInternal "getDefaultTargetTriple" T.getDefaultTargetTriple
+  catchInternal 'T.getDefaultTargetTriple T.getDefaultTargetTriple
   
 -- | Returns a platform representative of the environment in which the
 -- calling process is running.
 getNativePlatform :: IO AnyPlatform
 getNativePlatform =
   do triple <- parseTriple <$> 
-               catchInternal "getProcessTargetTriple" T.getProcessTargetTriple
-     cpuName <- catchInternal "getHostCPUName" T.getHostCPUName
-     cpuFeatureSet <- catchInternal "getHostCPUFeatures" T.getHostCPUFeatures
+               catchInternal  'T.getProcessTargetTriple T.getProcessTargetTriple
+     cpuName <- catchInternal  'T.getHostCPUName T.getHostCPUName
+     cpuFeatureSet <- catchInternal 'T.getHostCPUFeatures T.getHostCPUFeatures
      let archString = showTarget $
                       Just $
                       architectureToTarget $

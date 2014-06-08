@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds, GADTs, KindSignatures, TypeFamilies,
     RankNTypes, FlexibleInstances, MultiParamTypeClasses,
     UndecidableInstances, FlexibleContexts, PatternSynonyms, 
-    NoImplicitPrelude #-}
+    NoImplicitPrelude, TemplateHaskell #-}
 {-# OPTIONS_GHC -Wall #-}
 module LLVM.General.Util.Internal.L where
 
@@ -173,18 +173,18 @@ runL platform settings (L l) =
      let Settings relocModel codeModel optLevel options = settings
      counter <- liftBase $ newMVar 0
      (target, tripleString') <- 
-       liftBase $ errorToIO "lookupTarget" $ 
+       liftBase $ errorToIO 'LL.lookupTarget $ 
        LL.lookupTarget 
        (Just $ showTarget . Just $ untagTarget $ subtargetTarget $ 
         platformSubtarget platform)
        (showTriple triple)
      let platform' = platform { platformTriple = parseTriple tripleString' }
-     liftBaseOp (catchCaller "withTargetOptions" LL.withTargetOptions)
+     liftBaseOp (catchCaller 'LL.withTargetOptions LL.withTargetOptions)
        (\targetOptions ->
-         do liftBase $ catchInternal "pokeTargetOptions" $ 
+         do liftBase $ catchInternal 'LL.pokeTargetOptions $ 
               LL.pokeTargetOptions options targetOptions
             liftBaseOp 
-              (catchCaller "withTargetMachine" $
+              (catchCaller 'LL.withTargetMachine $
                LL.withTargetMachine target tripleString'
                (subtargetCpuString subtarget)
                mempty -- XXX see llvm-general issue #105
@@ -192,12 +192,12 @@ runL platform settings (L l) =
               (\targetMachine ->
                 do dataLayout <- 
                      liftBase $ 
-                     catchInternal "getTargetMachineDataLayout" $
+                     catchInternal 'LL.getTargetMachineDataLayout $
                      LL.getTargetMachineDataLayout targetMachine
-                   liftBaseOp (catchCaller "withContext" LL.withContext)
+                   liftBaseOp (catchCaller 'LL.withContext LL.withContext)
                      (\ctx ->
                        liftBaseOp 
-                       (catchCaller "withTargetLibraryInfo" $
+                       (catchCaller 'LL.withTargetLibraryInfo $
                         LL.withTargetLibraryInfo tripleString')
                        (\libraryInfo ->
                            let c = C (BackendJust platform') 
@@ -231,10 +231,10 @@ runNativeL m =
 runVoidL :: (MonadBaseControl IO m) => L BackendVoid m a -> m a
 runVoidL (L l) =
   do counter <- liftBase $ newMVar 0
-     catchCaller "withContext" (liftBaseOp LL.withContext)
+     catchCaller 'LL.withContext (liftBaseOp LL.withContext)
        (\ctx -> 
          liftBaseOp 
-         (catchCaller "withTargetLibraryInfo" $ LL.withTargetLibraryInfo "")
+         (catchCaller 'LL.withTargetLibraryInfo $ LL.withTargetLibraryInfo "")
          (\libraryInfo ->
            let c = C backendNothing backendNothing backendNothing ctx
                    backendNothing libraryInfo counter in
@@ -249,18 +249,18 @@ runInL platform settings (L l) =
          let counter = lCounter c
          let ctx = lContext c
          (target, tripleString') <- 
-           liftBase $ errorToIO "lookupTarget" $ LL.lookupTarget
+           liftBase $ errorToIO 'LL.lookupTarget $ LL.lookupTarget
            (Just $ showTarget . Just $ untagTarget $ subtargetTarget $ 
             platformSubtarget platform)
            (showTriple triple)
          let platform' = 
                platform { platformTriple = parseTriple tripleString' }
-         liftBaseOp (catchCaller "withTargetOptions" LL.withTargetOptions) $
+         liftBaseOp (catchCaller 'LL.withTargetOptions LL.withTargetOptions) $
            (\targetOptions ->
-             do liftBase $ catchInternal "pokeTargetOptions" $
+             do liftBase $ catchInternal 'LL.pokeTargetOptions $
                   LL.pokeTargetOptions options targetOptions
                 liftBaseOp 
-                  (catchCaller "withTargetMachine" $
+                  (catchCaller 'LL.withTargetMachine $
                    LL.withTargetMachine target tripleString'
                    (subtargetCpuString subtarget)
                    mempty -- XXX see llvm-general issue #105
@@ -268,10 +268,10 @@ runInL platform settings (L l) =
                   (\targetMachine ->
                     do dataLayout <- 
                          liftBase $ 
-                         catchInternal "getTargetMachineDataLayout" $ 
+                         catchInternal 'LL.getTargetMachineDataLayout $ 
                          LL.getTargetMachineDataLayout targetMachine
                        liftBaseOp 
-                         (catchCaller "withTargetLibraryInfo" $
+                         (catchCaller 'LL.withTargetLibraryInfo $
                           LL.withTargetLibraryInfo tripleString')
                          (\libraryInfo ->
                            let c' = C (BackendJust platform') 
@@ -292,7 +292,7 @@ runVoidInL :: (MonadBaseControl IO m)
               => L BackendVoid m a -> L b m a
 runVoidInL (L l) =
   liftBaseOp 
-  (catchCaller "withTargetLibraryInfo" $ LL.withTargetLibraryInfo "")
+  (catchCaller 'LL.withTargetLibraryInfo $ LL.withTargetLibraryInfo "")
   (\libraryInfo ->
     L (\c -> l $ c { lPlatform = backendNothing,
                      lSettings = backendNothing,

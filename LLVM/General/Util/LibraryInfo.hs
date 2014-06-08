@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, FlexibleContexts #-}
+{-# LANGUAGE NoImplicitPrelude, FlexibleContexts, TemplateHaskell #-}
 {-# OPTIONS_GHC -Wall #-}
 module LLVM.General.Util.LibraryInfo( 
   getLibraryFunction, getLibraryFunctionName,
@@ -20,14 +20,14 @@ getLibraryFunction :: (MonadBaseControl IO m)
                       => String -> L b m (Maybe LibraryFunction)
 getLibraryFunction name =
   do li <- getLibraryInfo
-     liftBase $ catchInternal "getLibaryFunction" $
+     liftBase $ catchInternal 'T.getLibraryFunction $
        T.getLibraryFunction li name
 
 getLibraryFunctionName :: (MonadBaseControl IO m) 
                           => LibraryFunction -> L b m String
 getLibraryFunctionName lf = 
   do li <- getLibraryInfo
-     liftBase $ catchInternal "getLibraryFunctionName" $
+     liftBase $ catchInternal 'T.getLibraryFunctionName $
        T.getLibraryFunctionName li lf
 
 setLibraryFunctionAvailableWithName :: (MonadBaseControl IO m)
@@ -35,5 +35,5 @@ setLibraryFunctionAvailableWithName :: (MonadBaseControl IO m)
                                        -> L b m ()
 setLibraryFunctionAvailableWithName lf name =
   do li <- getLibraryInfo
-     liftBase $ catchInternal "setLibraryFunctionAvailableWithName" $
+     liftBase $ catchInternal 'T.setLibraryFunctionAvailableWithName $
        T.setLibraryFunctionAvailableWithName li lf name

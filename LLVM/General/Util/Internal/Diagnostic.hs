@@ -14,17 +14,18 @@ import ClassyPrelude
 import Control.Exception.Lifted(catches, Handler(..))
 import Control.Monad.Trans.Control(MonadBaseControl(..))
 import Control.Monad.Trans.Error(ErrorT(..))
+import Language.Haskell.TH(Name)
 
 import LLVM.General.Diagnostic
 
-data LLVMError = LLVMError String String
-               | LLVMInternalError String String
-               | LLVMDiagnostic String Diagnostic
+data LLVMError = LLVMError Name String
+               | LLVMInternalError Name String
+               | LLVMDiagnostic Name Diagnostic
                deriving (Eq,Ord,Show,Typeable)
                           
 instance Exception LLVMError
 
-llvmErrorFunctionName :: LLVMError -> String
+llvmErrorFunctionName :: LLVMError -> Name
 llvmErrorFunctionName (LLVMError funcName _) = funcName
 llvmErrorFunctionName (LLVMInternalError funcName _) = funcName
 llvmErrorFunctionName (LLVMDiagnostic funcName _) = funcName
@@ -34,14 +35,14 @@ llvmErrorString (LLVMError _ str) = str
 llvmErrorString (LLVMInternalError _ str) = str
 llvmErrorString (LLVMDiagnostic _ diag) = diagnosticDisplay diag
 
-errorToIO :: String -> ErrorT String IO a -> IO a
+errorToIO :: Name -> ErrorT String IO a -> IO a
 errorToIO funcName m =
   do result <- catchInternal funcName $ runErrorT m
      case result of 
        Left str -> throwIO (LLVMError funcName str)
        Right x -> return x
        
-diagToIO :: String -> ErrorT (Either String Diagnostic) IO a -> IO a
+diagToIO :: Name -> ErrorT (Either String Diagnostic) IO a -> IO a
 diagToIO funcName m =
   do result <- catchInternal funcName $ runErrorT m
      case result of 
@@ -49,7 +50,7 @@ diagToIO funcName m =
        Left (Right diag) -> throwIO (LLVMDiagnostic funcName diag)
        Right x -> return x
 
-catchInternal :: (MonadBaseControl IO m) => String -> m a -> m a
+catchInternal :: (MonadBaseControl IO m) => Name -> m a -> m a
 catchInternal funcName m =
   catch m catcher
   where catcher e = 
@@ -63,7 +64,7 @@ newtype AntiCatch = AntiCatch IOError
 instance Exception AntiCatch
 
 catchCaller :: (MonadBaseControl IO m) => 
-               String
+               Name
                -> ((a -> m b) -> m b) 
                -> (a -> m b) 
                -> m b
@@ -78,7 +79,7 @@ catchCaller funcName f g =
           else throwIO e
 
 catchCallerError :: (MonadBaseControl IO m) => 
-                    String
+                    Name
                     -> ((a -> m b) -> ErrorT String m b) 
                     -> (a -> m b) 
                     -> m b
@@ -92,7 +93,7 @@ catchCallerError funcName f g =
                Right x -> return x
                
 catchCallerDiag :: (MonadBaseControl IO m) => 
-                    String
+                    Name
                     -> ((a -> m b) -> ErrorT (Either String Diagnostic) m b) 
                     -> (a -> m b) 
                     -> m b
