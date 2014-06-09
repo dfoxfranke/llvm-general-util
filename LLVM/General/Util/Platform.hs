@@ -89,7 +89,8 @@ module LLVM.General.Util.Platform (
   Vendor(..), parseVendor, showVendor,
                                        
   -- ** OSs
-  OS(..), parseOS, showOS,
+  OS(..), parseOS, showOS, 
+  OSSuffix(..), showOSSuffix,
   
   -- ** Environments
   Environment(..), parseEnvironment, showEnvironment,
@@ -763,22 +764,19 @@ data OS = OSAuroraux
         | OSNvcl
         deriving (Eq,Ord,Show,Bounded,Enum,Typeable,Data,Generic)
 
-newtype OSSuffixChar = OSSuffixChar {unOSSuffixChar :: Char }
-                       deriving (Eq,Ord,Typeable,Data,Generic)
-                                
-newtype OSSuffix = OSSuffix [OSSuffixChar]
+newtype OSSuffix = OSSuffix String
                    deriving (Eq,Ord,Typeable,Data,Generic)
                             
 showOSSuffix :: OSSuffix -> String
-showOSSuffix (OSSuffix s) = unOSSuffixChar <$> s
-
+showOSSuffix (OSSuffix s) = s
+                            
 instance Show OSSuffix where
   show = show . showOSSuffix
   
 instance IsString OSSuffix where
-  fromString s = assert legalSuffix (OSSuffix $ OSSuffixChar <$> s)
+  fromString s = assert legalSuffix (OSSuffix s)
     where legalSuffix = all (\c -> isPrint c && c /= '-') s
-                 
+
 showOS :: Maybe (OS,OSSuffix) -> String
 showOS Nothing = "unknown"
 showOS (Just (OSAuroraux,x)) = "auroraux" ++ showOSSuffix x
