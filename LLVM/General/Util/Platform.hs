@@ -107,6 +107,7 @@ module LLVM.General.Util.Platform (
 import ClassyPrelude
 
 import Data.List.Split(splitOn)
+import Data.Char(isPrint)
 import Data.Data(Data())
 import Data.Map(mapKeys)
 import Data.Maybe(fromJust)
@@ -760,60 +761,76 @@ data OS = OSAuroraux
         | OSCuda
         | OSNvcl
         deriving (Eq,Ord,Show,Bounded,Enum,Typeable,Data,Generic)
-                 
-showOS :: Maybe (OS,String) -> String
-showOS Nothing = "unknown"
-showOS (Just (OSAuroraux,x)) = "auroraux" ++ x
-showOS (Just (OSCygwin,x)) = "cygwin" ++ x
-showOS (Just (OSDarwin,x)) = "darwin" ++ x
-showOS (Just (OSDragonfly,x)) = "dragonfly" ++ x
-showOS (Just (OSFreebsd,x)) = "freebsd" ++ x
-showOS (Just (OSIos,x)) = "ios" ++ x
-showOS (Just (OSKfreebsd,x)) = "kfreebsd" ++ x
-showOS (Just (OSLinux,x)) = "linux" ++ x
-showOS (Just (OSLv2,x)) = "lv2" ++ x
-showOS (Just (OSMacosx,x)) = "macosx" ++ x
-showOS (Just (OSMingw32,x)) = "mingw32" ++ x
-showOS (Just (OSNetbsd,x)) = "netbsd" ++ x
-showOS (Just (OSOpenbsd,x)) = "openbsd" ++ x
-showOS (Just (OSSolaris,x)) = "solaris" ++ x
-showOS (Just (OSWin32,x)) = "win32" ++ x
-showOS (Just (OSHaiku,x)) = "haiku" ++ x
-showOS (Just (OSMinix,x)) = "minix" ++ x
-showOS (Just (OSRtems,x)) = "rtems" ++ x
-showOS (Just (OSNacl,x)) = "nacl" ++ x
-showOS (Just (OSCnk,x)) = "cnk" ++ x
-showOS (Just (OSBitrig,x)) = "bitrig" ++ x
-showOS (Just (OSAix,x)) = "aix" ++ x
-showOS (Just (OSCuda,x)) = "cuda" ++ x
-showOS (Just (OSNvcl,x)) = "nvcl" ++ x
 
-parseOS :: String -> Maybe (OS,String)
+newtype OSSuffixChar = OSSuffixChar {unOSSuffixChar :: Char }
+                       deriving (Eq,Ord,Typeable,Data,Generic)
+                                
+newtype OSSuffix = OSSuffix [OSSuffixChar]
+                   deriving (Eq,Ord,Typeable,Data,Generic)
+                            
+showOSSuffix :: OSSuffix -> String
+showOSSuffix (OSSuffix s) = unOSSuffixChar <$> s
+
+instance Show OSSuffix where
+  show = show . showOSSuffix
+  
+instance IsString OSSuffix where
+  fromString s = assert legalSuffix (OSSuffix $ OSSuffixChar <$> s)
+    where legalSuffix = all (\c -> isPrint c && c /= '-') s
+                 
+showOS :: Maybe (OS,OSSuffix) -> String
+showOS Nothing = "unknown"
+showOS (Just (OSAuroraux,x)) = "auroraux" ++ showOSSuffix x
+showOS (Just (OSCygwin,x)) = "cygwin" ++ showOSSuffix x
+showOS (Just (OSDarwin,x)) = "darwin" ++ showOSSuffix x
+showOS (Just (OSDragonfly,x)) = "dragonfly" ++ showOSSuffix x
+showOS (Just (OSFreebsd,x)) = "freebsd" ++ showOSSuffix x
+showOS (Just (OSIos,x)) = "ios" ++ showOSSuffix x
+showOS (Just (OSKfreebsd,x)) = "kfreebsd" ++ showOSSuffix x
+showOS (Just (OSLinux,x)) = "linux" ++ showOSSuffix x
+showOS (Just (OSLv2,x)) = "lv2" ++ showOSSuffix x
+showOS (Just (OSMacosx,x)) = "macosx" ++ showOSSuffix x
+showOS (Just (OSMingw32,x)) = "mingw32" ++ showOSSuffix x
+showOS (Just (OSNetbsd,x)) = "netbsd" ++ showOSSuffix x
+showOS (Just (OSOpenbsd,x)) = "openbsd" ++ showOSSuffix x
+showOS (Just (OSSolaris,x)) = "solaris" ++ showOSSuffix x
+showOS (Just (OSWin32,x)) = "win32" ++ showOSSuffix x
+showOS (Just (OSHaiku,x)) = "haiku" ++ showOSSuffix x
+showOS (Just (OSMinix,x)) = "minix" ++ showOSSuffix x
+showOS (Just (OSRtems,x)) = "rtems" ++ showOSSuffix x
+showOS (Just (OSNacl,x)) = "nacl" ++ showOSSuffix x
+showOS (Just (OSCnk,x)) = "cnk" ++ showOSSuffix x
+showOS (Just (OSBitrig,x)) = "bitrig" ++ showOSSuffix x
+showOS (Just (OSAix,x)) = "aix" ++ showOSSuffix x
+showOS (Just (OSCuda,x)) = "cuda" ++ showOSSuffix x
+showOS (Just (OSNvcl,x)) = "nvcl" ++ showOSSuffix x
+
+parseOS :: String -> Maybe (OS,OSSuffix)
 parseOS os 
-  | "auroraux" `isPrefixOf` x  = Just (OSAuroraux, drop 8 x)
-  | "cygwin" `isPrefixOf` x    = Just (OSCygwin, drop 6 x)
-  | "darwin" `isPrefixOf` x    = Just (OSDarwin, drop 6 x)
-  | "dragonfly" `isPrefixOf` x = Just (OSDragonfly, drop 9 x)
-  | "freebsd" `isPrefixOf` x   = Just (OSFreebsd, drop 7 x)
-  | "ios" `isPrefixOf` x       = Just (OSIos, drop 3 x)
-  | "kfreebsd" `isPrefixOf` x  = Just (OSKfreebsd, drop 8 x)
-  | "linux" `isPrefixOf` x     = Just (OSLinux, drop 5 x)
-  | "lv2" `isPrefixOf` x       = Just (OSLv2, drop 3 x)
-  | "macosx" `isPrefixOf` x    = Just (OSMacosx, drop 6 x)
-  | "mingw32" `isPrefixOf` x   = Just (OSMingw32, drop 7 x)
-  | "netbsd" `isPrefixOf` x    = Just (OSNetbsd, drop 6 x)
-  | "openbsd" `isPrefixOf` x   = Just (OSOpenbsd, drop 7 x)
-  | "solaris" `isPrefixOf` x   = Just (OSSolaris, drop 7 x)
-  | "win32" `isPrefixOf` x     = Just (OSWin32, drop 5 x)
-  | "haiku" `isPrefixOf` x     = Just (OSHaiku, drop 5 x)
-  | "minix" `isPrefixOf` x     = Just (OSMinix, drop 5 x)
-  | "rtems" `isPrefixOf` x     = Just (OSRtems, drop 5 x)
-  | "nacl" `isPrefixOf` x      = Just (OSNacl, drop 4 x)
-  | "cnk" `isPrefixOf` x       = Just (OSCnk, drop 3 x)
-  | "bitrig" `isPrefixOf` x    = Just (OSBitrig, drop 6 x)
-  | "aix" `isPrefixOf` x       = Just (OSAix, drop 3 x)
-  | "cuda" `isPrefixOf` x      = Just (OSCuda, drop 4 x)
-  | "nvcl" `isPrefixOf` x      = Just (OSNvcl, drop 4 x)
+  | "auroraux" `isPrefixOf` x  = Just (OSAuroraux, fromString $ drop 8 x)
+  | "cygwin" `isPrefixOf` x    = Just (OSCygwin, fromString $ drop 6 x)
+  | "darwin" `isPrefixOf` x    = Just (OSDarwin, fromString $ drop 6 x)
+  | "dragonfly" `isPrefixOf` x = Just (OSDragonfly, fromString $ drop 9 x)
+  | "freebsd" `isPrefixOf` x   = Just (OSFreebsd, fromString $ drop 7 x)
+  | "ios" `isPrefixOf` x       = Just (OSIos, fromString $ drop 3 x)
+  | "kfreebsd" `isPrefixOf` x  = Just (OSKfreebsd, fromString $ drop 8 x)
+  | "linux" `isPrefixOf` x     = Just (OSLinux, fromString $ drop 5 x)
+  | "lv2" `isPrefixOf` x       = Just (OSLv2, fromString $ drop 3 x)
+  | "macosx" `isPrefixOf` x    = Just (OSMacosx, fromString $ drop 6 x)
+  | "mingw32" `isPrefixOf` x   = Just (OSMingw32, fromString $ drop 7 x)
+  | "netbsd" `isPrefixOf` x    = Just (OSNetbsd, fromString $ drop 6 x)
+  | "openbsd" `isPrefixOf` x   = Just (OSOpenbsd, fromString $ drop 7 x)
+  | "solaris" `isPrefixOf` x   = Just (OSSolaris, fromString $ drop 7 x)
+  | "win32" `isPrefixOf` x     = Just (OSWin32, fromString $ drop 5 x)
+  | "haiku" `isPrefixOf` x     = Just (OSHaiku, fromString $ drop 5 x)
+  | "minix" `isPrefixOf` x     = Just (OSMinix, fromString $ drop 5 x)
+  | "rtems" `isPrefixOf` x     = Just (OSRtems, fromString $ drop 5 x)
+  | "nacl" `isPrefixOf` x      = Just (OSNacl, fromString $ drop 4 x)
+  | "cnk" `isPrefixOf` x       = Just (OSCnk, fromString $ drop 3 x)
+  | "bitrig" `isPrefixOf` x    = Just (OSBitrig, fromString $ drop 6 x)
+  | "aix" `isPrefixOf` x       = Just (OSAix, fromString $ drop 3 x)
+  | "cuda" `isPrefixOf` x      = Just (OSCuda, fromString $ drop 4 x)
+  | "nvcl" `isPrefixOf` x      = Just (OSNvcl, fromString $ drop 4 x)
   | otherwise        = Nothing
   where x = toLower os
 
@@ -847,7 +864,7 @@ parseFormat format
   | otherwise              = Nothing
   where x = toLower format
 
-defaultFormat :: Maybe (OS,String) -> Maybe Format
+defaultFormat :: Maybe (OS,OSSuffix) -> Maybe Format
 defaultFormat Nothing = Nothing
 defaultFormat (Just (OSCygwin,_))  = Just FormatCoff
 defaultFormat (Just (OSMingw32,_)) = Just FormatCoff
@@ -859,7 +876,7 @@ defaultFormat _                    = Just FormatElf
 
 data Triple = Triple { tripleArchitecture :: Maybe Architecture,
                        tripleVendor :: Maybe Vendor,
-                       tripleOS :: Maybe (OS, String),
+                       tripleOS :: Maybe (OS, OSSuffix),
                        tripleEnvironment :: Maybe Environment, 
                        tripleFormat :: Maybe Format }
               deriving (Eq,Ord,Show,Typeable,Data,Generic)
