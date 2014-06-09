@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DataKinds, KindSignatures, GADTs, RankNTypes, TypeFamilies, TemplateHaskell, FlexibleContexts, StandaloneDeriving, NoImplicitPrelude #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, DataKinds, KindSignatures, GADTs, RankNTypes, TypeFamilies, TemplateHaskell, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wall #-}
 module LLVM.General.Util.Platform (
   -- * Backends, targets and subtargets
@@ -134,6 +134,7 @@ data Backend = BackendVoid
              | BackendSystemz
              | BackendX86
              | BackendXcore
+             deriving (Eq,Ord,Show,Enum,Bounded,Typeable,Data,Generic)
 
 -- | 'IsBackendVoid' is a type-level predicate over 'Backend's. It returns
 -- 'True' for 'BackendVoid' and 'False' for everything else.
@@ -758,7 +759,7 @@ data OS = OSAuroraux
         | OSAix
         | OSCuda
         | OSNvcl
-        deriving (Eq,Ord,Show,Bounded,Enum,Typeable,Data)
+        deriving (Eq,Ord,Show,Bounded,Enum,Typeable,Data,Generic)
                  
 showOS :: Maybe (OS,String) -> String
 showOS Nothing = "unknown"
@@ -861,7 +862,7 @@ data Triple = Triple { tripleArchitecture :: Maybe Architecture,
                        tripleOS :: Maybe (OS, String),
                        tripleEnvironment :: Maybe Environment, 
                        tripleFormat :: Maybe Format }
-              deriving (Eq,Ord,Show,Typeable,Data)
+              deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
 parseTriple :: String -> Triple
 parseTriple x = 

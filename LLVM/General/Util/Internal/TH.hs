@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, DeriveDataTypeable, ParallelListComp #-}
+{-# LANGUAGE TemplateHaskell, DeriveDataTypeable, DeriveGeneric, ParallelListComp #-}
 
 module LLVM.General.Util.Internal.TH(genStrEnum) where
 
@@ -7,8 +7,8 @@ import Data.Data(Data)
 import Data.Functor
 import Data.Maybe
 import Data.Typeable(Typeable)
+import GHC.Generics
 import Language.Haskell.TH
-
 mkDconName :: String -> String -> Name
 mkDconName prefix [] = mkName prefix
 mkDconName prefix (x:xs) = 
@@ -31,7 +31,7 @@ genStrEnum tycon dconPrefix strs defaultStr wantParse =
      dataDecl <- 
        dataD (cxt []) tyconName []
        (flip normalC [] <$> dconNames)
-       [''Eq, ''Ord, ''Show, ''Enum, ''Bounded, ''Typeable, ''Data]
+       [''Eq, ''Ord, ''Show, ''Enum, ''Bounded, ''Typeable, ''Data, ''Generic]
      parseDecl <- sigD parseName [t|String -> Maybe $(conT tyconName)|]
      parseDef <-
        funD parseName
