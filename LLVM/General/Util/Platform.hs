@@ -96,13 +96,12 @@ module LLVM.General.Util.Platform (
   Environment(..), parseEnvironment, showEnvironment,
   
   -- ** Object formats
-  Format(..), parseFormat, showFormat,
+  Format(..), parseFormat, showFormat, defaultFormat,
                            
   -- * Platforms
   Platform(..), AnyPlatform(..),
   anyPlatformSubtarget, anyPlatformTriple, mkAnyPlatform,
   mkAnyPlatformFromTriple, getDefaultPlatform, getNativePlatform
-  
   ) where
 
 import ClassyPrelude
