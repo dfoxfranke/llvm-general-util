@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, GADTs, KindSignatures, TypeFamilies,
     RankNTypes, FlexibleInstances, MultiParamTypeClasses,
-    UndecidableInstances, FlexibleContexts, PatternSynonyms, 
+    UndecidableInstances, FlexibleContexts, PatternSynonyms,
     NoImplicitPrelude, TemplateHaskell #-}
 {-# OPTIONS_GHC -Wall #-}
 module LLVM.General.Util.Internal.L where
@@ -37,11 +37,11 @@ data BackendMaybe (b :: Backend) a where
   BackendJust :: a -> BackendMaybe b a
   BackendNothing :: DiscriminateBool (IsBackendVoid b) False
                     -> BackendMaybe b a
-  
+
 fromBackendJust :: (IsBackendVoid b ~ False) => BackendMaybe b a -> a
 fromBackendJust (BackendJust x) = x
 fromBackendJust (BackendNothing x) = absurd x
-  
+
 fromBackendMaybe :: BackendMaybe b a -> Maybe a
 fromBackendMaybe (BackendJust x) = Just x
 fromBackendMaybe (BackendNothing _) = Nothing
@@ -49,7 +49,7 @@ fromBackendMaybe (BackendNothing _) = Nothing
 backendNothing :: BackendMaybe BackendVoid a
 backendNothing = BackendNothing ()
 
-data C b = 
+data C b =
   C { lPlatform :: BackendMaybe b (Platform b),
       lSettings :: BackendMaybe b Settings,
       lDataLayout :: BackendMaybe b AST.DataLayout,
@@ -57,27 +57,27 @@ data C b =
       lTargetMachine :: BackendMaybe b LL.TargetMachine,
       lLibraryInfo :: LL.TargetLibraryInfo,
       lCounter :: MVar Word }
-                   
+
 newtype L b m a = L { unL :: (C b -> m a) }
 
 instance (Functor m) => Functor (L b m) where
   f `fmap` (L l) = L (\c -> f `fmap` (l c))
-  
+
 instance (Applicative m) => Applicative (L b m) where
   pure = L . const . pure
   (L l) <*> (L l') = L (\c -> l c <*> l' c)
-  
+
 instance (Monad m) => Monad (L b m) where
   return = L . const . return
   (L l) >>= f = L (\c -> l c >>= flip (unL . f) c)
   fail = L . const . fail
-  
+
 instance MonadTrans (L b) where
   lift = L . const
-  
+
 instance (MonadIO m) => MonadIO (L b m) where
   liftIO = lift . liftIO
-  
+
 instance (MonadBase base m) => MonadBase base (L b m) where
   liftBase = liftBaseDefault
 
@@ -90,27 +90,27 @@ instance (MonadBaseControl base m) => MonadBaseControl base (L b m) where
   data StM (L b m) a = StLM { unStLM :: ComposeSt (L b) m a }
   restoreM = defaultRestoreM unStLM
   liftBaseWith = defaultLiftBaseWith StLM
-  
+
 instance (MFunctor (L b)) where
   hoist f (L l) = L (f . l)
-  
+
 instance (MMonad (L b)) where
-  embed f (L l) = L (\c -> unL (f (l c)) c) 
-  
+  embed f (L l) = L (\c -> unL (f (l c)) c)
+
 instance (MonadReader r m) => MonadReader r (L b m) where
   ask = lift ask
   local f m = hoist (local f) m
-  
+
 instance (MonadWriter w m) => MonadWriter w (L b m) where
   writer = lift . writer
   tell = lift . tell
   listen (L l) = L (listen . l)
   pass (L l) = L (pass . l)
-  
+
 instance (MonadState s m) => MonadState s (L b m) where
   get = lift get
   put = lift . put
-  
+
 instance (MonadRWS r w s m) => MonadRWS r w s (L b m)
 
 instance (MonadError e m) => MonadError e (L b m) where
@@ -119,7 +119,7 @@ instance (MonadError e m) => MonadError e (L b m) where
     L (\c -> catchError (l c) (\e -> unL (f e) c))
 
 -- This is fairly useless since there's no MonadControlBase instance for
--- for ContT. 
+-- for ContT.
 instance (MonadCont m) => MonadCont (L b m) where
   callCC f = L (\c -> callCC $ (\cont -> unL (f (L . const . cont)) c))
 
@@ -151,11 +151,11 @@ getSettingsOrDefault =
 getContext :: (Monad m) => (L b m LL.Context)
 getContext = L (return . lContext)
 
-getTargetMachine :: (Monad m, IsBackendVoid b ~ False) 
+getTargetMachine :: (Monad m, IsBackendVoid b ~ False)
                     => (L b m LL.TargetMachine)
 getTargetMachine = L (return . fromBackendJust . lTargetMachine)
 
-getTargetMachineMaybe :: (Monad m) 
+getTargetMachineMaybe :: (Monad m)
                          => (L b m (Maybe LL.TargetMachine))
 getTargetMachineMaybe = L (return . fromBackendMaybe . lTargetMachine)
 
@@ -165,42 +165,42 @@ getLibraryInfo = L (return . lLibraryInfo)
 newName :: (MonadBaseControl IO m) => L b m AST.Name
 newName = L (\c -> liftBase $ modifyMVar (lCounter c) $
                    (\w -> return (w+1, AST.UnName w)))
-                    
-runL :: (MonadBaseControl IO m) 
+
+runL :: (MonadBaseControl IO m)
         => Platform b -> Settings -> L b m a -> m a
 runL platform settings (L l) =
   do let Platform subtarget triple = platform
      let Settings relocModel codeModel optLevel options = settings
      counter <- liftBase $ newMVar 0
-     (target, tripleString') <- 
-       liftBase $ errorToIO 'LL.lookupTarget $ 
-       LL.lookupTarget 
-       (Just $ showTarget . Just $ untagTarget $ subtargetTarget $ 
+     (target, tripleString') <-
+       liftBase $ errorToIO 'LL.lookupTarget $
+       LL.lookupTarget
+       (Just $ showTarget . Just $ untagTarget $ subtargetTarget $
         platformSubtarget platform)
        (showTriple triple)
      let platform' = platform { platformTriple = parseTriple tripleString' }
      liftBaseOp (catchCaller 'LL.withTargetOptions LL.withTargetOptions)
        (\targetOptions ->
-         do liftBase $ catchInternal 'LL.pokeTargetOptions $ 
+         do liftBase $ catchInternal 'LL.pokeTargetOptions $
               LL.pokeTargetOptions options targetOptions
-            liftBaseOp 
+            liftBaseOp
               (catchCaller 'LL.withTargetMachine $
                LL.withTargetMachine target tripleString'
                (subtargetCpuString subtarget)
                mempty -- XXX see llvm-general issue #105
                targetOptions relocModel codeModel optLevel)
               (\targetMachine ->
-                do dataLayout <- 
-                     liftBase $ 
+                do dataLayout <-
+                     liftBase $
                      catchInternal 'LL.getTargetMachineDataLayout $
                      LL.getTargetMachineDataLayout targetMachine
                    liftBaseOp (catchCaller 'LL.withContext LL.withContext)
                      (\ctx ->
-                       liftBaseOp 
+                       liftBaseOp
                        (catchCaller 'LL.withTargetLibraryInfo $
                         LL.withTargetLibraryInfo tripleString')
                        (\libraryInfo ->
-                           let c = C (BackendJust platform') 
+                           let c = C (BackendJust platform')
                                    (BackendJust settings)
                                    (BackendJust dataLayout) ctx
                                    (BackendJust targetMachine)
@@ -208,7 +208,7 @@ runL platform settings (L l) =
                            l c))))
 
 runAnyL :: (MonadBaseControl IO m)
-           => AnyPlatform -> Settings 
+           => AnyPlatform -> Settings
            -> (forall b. (IsBackendVoid b ~ False) => L b m a)
            -> m a
 runAnyL (AnyPlatform platform) settings m =
@@ -220,7 +220,7 @@ runDefaultL :: (MonadBaseControl IO m)
 runDefaultL m =
   do platform <- liftBase getDefaultPlatform
      runAnyL platform defaultSettings m
-     
+
 runNativeL :: (MonadBaseControl IO m)
               => (forall b. (IsBackendVoid b ~ False) => L b m a)
               -> m a
@@ -232,8 +232,8 @@ runVoidL :: (MonadBaseControl IO m) => L BackendVoid m a -> m a
 runVoidL (L l) =
   do counter <- liftBase $ newMVar 0
      catchCaller 'LL.withContext (liftBaseOp LL.withContext)
-       (\ctx -> 
-         liftBaseOp 
+       (\ctx ->
+         liftBaseOp
          (catchCaller 'LL.withTargetLibraryInfo $ LL.withTargetLibraryInfo "")
          (\libraryInfo ->
            let c = C backendNothing backendNothing backendNothing ctx
@@ -248,33 +248,33 @@ runInL platform settings (L l) =
          let Settings relocModel codeModel optLevel options = settings
          let counter = lCounter c
          let ctx = lContext c
-         (target, tripleString') <- 
+         (target, tripleString') <-
            liftBase $ errorToIO 'LL.lookupTarget $ LL.lookupTarget
-           (Just $ showTarget . Just $ untagTarget $ subtargetTarget $ 
+           (Just $ showTarget . Just $ untagTarget $ subtargetTarget $
             platformSubtarget platform)
            (showTriple triple)
-         let platform' = 
+         let platform' =
                platform { platformTriple = parseTriple tripleString' }
          liftBaseOp (catchCaller 'LL.withTargetOptions LL.withTargetOptions) $
            (\targetOptions ->
              do liftBase $ catchInternal 'LL.pokeTargetOptions $
                   LL.pokeTargetOptions options targetOptions
-                liftBaseOp 
+                liftBaseOp
                   (catchCaller 'LL.withTargetMachine $
                    LL.withTargetMachine target tripleString'
                    (subtargetCpuString subtarget)
                    mempty -- XXX see llvm-general issue #105
                    targetOptions relocModel codeModel optLevel)
                   (\targetMachine ->
-                    do dataLayout <- 
-                         liftBase $ 
-                         catchInternal 'LL.getTargetMachineDataLayout $ 
+                    do dataLayout <-
+                         liftBase $
+                         catchInternal 'LL.getTargetMachineDataLayout $
                          LL.getTargetMachineDataLayout targetMachine
-                       liftBaseOp 
+                       liftBaseOp
                          (catchCaller 'LL.withTargetLibraryInfo $
                           LL.withTargetLibraryInfo tripleString')
                          (\libraryInfo ->
-                           let c' = C (BackendJust platform') 
+                           let c' = C (BackendJust platform')
                                     (BackendJust settings)
                                     (BackendJust dataLayout) ctx
                                     (BackendJust targetMachine)
@@ -282,16 +282,16 @@ runInL platform settings (L l) =
                            l c'))))
 
 runAnyInL :: (MonadBaseControl IO m)
-             => AnyPlatform -> Settings 
-             -> (forall b. (IsBackendVoid b ~ False) => L b m a) 
+             => AnyPlatform -> Settings
+             -> (forall b. (IsBackendVoid b ~ False) => L b m a)
              -> L b' m a
 runAnyInL (AnyPlatform platform) settings m =
   runInL platform settings m
-  
-runVoidInL :: (MonadBaseControl IO m) 
+
+runVoidInL :: (MonadBaseControl IO m)
               => L BackendVoid m a -> L b m a
 runVoidInL (L l) =
-  liftBaseOp 
+  liftBaseOp
   (catchCaller 'LL.withTargetLibraryInfo $ LL.withTargetLibraryInfo "")
   (\libraryInfo ->
     L (\c -> l $ c { lPlatform = backendNothing,

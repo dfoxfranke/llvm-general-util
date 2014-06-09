@@ -1,10 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude, DeriveDataTypeable #-}
 {-# OPTIONS_GHC -Wall #-}
 
-module LLVM.General.Util.PassSetSpec ( 
+module LLVM.General.Util.PassSetSpec (
   PassSetSpec(..),
   defaultPassSetSpec, defaultCuratedPassSetSpec,
-  
+
   module LLVM.General.Transforms
 
   ) where

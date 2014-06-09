@@ -10,12 +10,11 @@ main :: IO ()
 main = do initializeAllTargets
           defaultMain tests
 
-tests = 
-  [testGroup "Triples" 
+tests =
+  [testGroup "Triples"
    [
      SC.testProperty "noOSPrefixes" noOSPrefixes,
      SC.withDepth 3 $ SC.testProperty "allTriplesPreserved" allTriplesPreserved,
      SC.withDepth 3 $ SC.testProperty "allTriplesPreservedSettingArch" allTriplesPreservedSettingArch
    ]
   ]
-      

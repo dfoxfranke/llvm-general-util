@@ -7,7 +7,7 @@ module LLVM.General.Util.Settings(
   pattern RelocationModelStatic,
   pattern RelocationModelPIC,
   pattern RelocationModelDynamicNoPIC,
-  
+
   CodeModel,
   pattern CodeModelDefault,
   pattern CodeModelJITDefault,
@@ -15,16 +15,16 @@ module LLVM.General.Util.Settings(
   pattern CodeModelKernel,
   pattern CodeModelMedium,
   pattern CodeModelLarge,
-  
+
   OptimizationLevel,
   pattern OptimizationLevelNone,
   pattern OptimizationLevelLess,
   pattern OptimizationLevelDefault,
   pattern OptimizationLevelAggressive,
-  
+
   Settings(..),
   defaultOptions, defaultSettings,
-  
+
   module LLVM.General.Target.Options
   ) where
 
@@ -58,8 +58,8 @@ pattern OptimizationLevelNone = LLVM.General.CodeGenOpt.None
 pattern OptimizationLevelLess = LLVM.General.CodeGenOpt.Less
 pattern OptimizationLevelDefault = LLVM.General.CodeGenOpt.Default
 pattern OptimizationLevelAggressive = LLVM.General.CodeGenOpt.Aggressive
-{-# COMPLETE_PATTERNS OptimizationLevelNone && OptimizationLevelLess && 
-                      OptimizationLevelDefault && OptimizationLevelAggressive 
+{-# COMPLETE_PATTERNS OptimizationLevelNone && OptimizationLevelLess &&
+                      OptimizationLevelDefault && OptimizationLevelAggressive
   #-}
 
 data Settings = Settings {
@@ -67,9 +67,9 @@ data Settings = Settings {
   settingsCodeModel :: CodeModel,
   settingsOptimizationLevel :: OptimizationLevel,
   settingsOptions :: Options }
-                
+
 defaultOptions :: Options
-defaultOptions = 
+defaultOptions =
   Options False False False False False False False False False False
   False False False False False False False 0 "" FloatABIDefault
   FloatingPointOperationFusionStandard

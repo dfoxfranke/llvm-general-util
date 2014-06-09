@@ -3,7 +3,7 @@
 module LLVM.General.Util.Diagnostic (
   LLVMError(..),
   llvmErrorFunctionName, llvmErrorString,
-  
+
   module LLVM.General.Diagnostic
 ) where
 

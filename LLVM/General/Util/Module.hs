@@ -4,18 +4,18 @@
 
 module LLVM.General.Util.Module (
   ModuleBuilder(),
-  
+
   ModuleAST,
   moduleFromAST, moduleFromBitcode, moduleFromLLVMAssembly,
   moduleFromLLVMAssemblyFile, moduleFromBitcodeFile, linkModules,
   transformModule,
-  
+
   studyModule,
-  
+
   moduleAST, moduleBitcode, moduleTargetAssembly, moduleObject,
   writeLLVMAssemblyToFile, writeBitcodeToFile, writeTargetAssemblyToFile,
   writeObjectToFile,
-  
+
   ExecutableModule(),
   jitCompile, jitGetFunction
   ) where
@@ -51,7 +51,7 @@ data ModuleBuilder = MBAST ModuleAST
                    | MBLink ModuleBuilder ModuleBuilder
                    | MBTransform PassSetSpec ModuleBuilder
                    deriving (Eq,Show,Typeable,Data)
-                     
+
 moduleFromAST :: ModuleAST -> ModuleBuilder
 moduleFromAST = MBAST
 
@@ -75,7 +75,7 @@ transformModule = MBTransform
 
 pss :: (MonadBaseControl IO m) => PassSetSpec -> L b m LL.PassSetSpec
 pss spec =
-  do c <- getC 
+  do c <- getC
      let dl = fromBackendMaybe (lDataLayout c)
      let tli = Just $ lLibraryInfo c
      let tm = fromBackendMaybe (lTargetMachine c)
@@ -92,23 +92,23 @@ withModule builder f =
      case builder of
        MBAST ast ->
          liftBaseOp
-         (catchCallerError 'LL.withModuleFromAST $ 
+         (catchCallerError 'LL.withModuleFromAST $
           LL.withModuleFromAST ctx ast)
          (\moduleIO -> do liftBase $ errorToIO 'LL.verify $ LL.verify moduleIO
                           f moduleIO)
        MBBitcode s bs ->
          liftBaseOp
-         (catchCallerError 'LL.withModuleFromBitcode $ 
+         (catchCallerError 'LL.withModuleFromBitcode $
           LL.withModuleFromBitcode ctx (s,bs))
          (\moduleIO -> do liftBase $ errorToIO 'LL.verify $ LL.verify moduleIO
                           f moduleIO)
        MBVerifiedBitcode bs ->
          liftBaseOp
-         (catchCallerError 'LL.withModuleFromBitcode $ 
+         (catchCallerError 'LL.withModuleFromBitcode $
           LL.withModuleFromBitcode ctx ("",bs)) f
        MBAssembly asm ->
          liftBaseOp
-         (catchCallerDiag 'LL.withModuleFromLLVMAssembly $ 
+         (catchCallerDiag 'LL.withModuleFromLLVMAssembly $
           LL.withModuleFromLLVMAssembly ctx asm)
          (\moduleIO -> do liftBase $ errorToIO 'LL.verify $ LL.verify moduleIO
                           f moduleIO)
@@ -125,19 +125,19 @@ withModule builder f =
          (\moduleIO -> do liftBase $ errorToIO 'LL.verify $ LL.verify moduleIO
                           f moduleIO)
        MBLink mb1 mb2 ->
-         withModule mb1 
+         withModule mb1
          (\mod1 ->
            withModule mb2
            (\mod2 ->
-             do liftBase $ errorToIO 'LL.linkModules $ 
+             do liftBase $ errorToIO 'LL.linkModules $
                   LL.linkModules False mod1 mod2
                 f mod1))
        MBTransform spec mb ->
          withModule mb
-         (\mod1 -> 
+         (\mod1 ->
            do spec' <- pss spec
               liftBaseOp
-                (catchCaller 'LL.withPassManager $ LL.withPassManager spec') 
+                (catchCaller 'LL.withPassManager $ LL.withPassManager spec')
                 (\pm ->
                   do _ <- catchInternal 'LL.runPassManager $
                           liftBase $ LL.runPassManager pm mod1
@@ -147,7 +147,7 @@ studyModule :: (MonadBaseControl IO m)
                => ModuleBuilder -> L b m ModuleBuilder
 studyModule builder =
   withModule builder (liftBase . liftM MBVerifiedBitcode . LL.moduleBitcode)
-  
+
 moduleAST :: (MonadBaseControl IO m) => ModuleBuilder -> L b m ModuleAST
 moduleAST builder = withModule builder (liftBase . LL.moduleAST)
 
@@ -159,7 +159,7 @@ moduleTargetAssembly :: (MonadBaseControl IO m, IsBackendVoid b ~ False)
 moduleTargetAssembly builder =
   do tm <- getTargetMachine
      withModule builder $
-       liftBase . errorToIO 'LL.moduleTargetAssembly . 
+       liftBase . errorToIO 'LL.moduleTargetAssembly .
        LL.moduleTargetAssembly tm
 
 moduleObject :: (MonadBaseControl IO m, IsBackendVoid b ~ False)
@@ -173,14 +173,14 @@ writeLLVMAssemblyToFile :: (MonadBaseControl IO m)
                            => IO.FilePath -> ModuleBuilder -> L b m ()
 writeLLVMAssemblyToFile path builder =
   withModule builder $
-  liftBase . errorToIO 'LL.writeLLVMAssemblyToFile . 
+  liftBase . errorToIO 'LL.writeLLVMAssemblyToFile .
   LL.writeLLVMAssemblyToFile (LL.File path)
-  
+
 writeBitcodeToFile :: (MonadBaseControl IO m)
                       => IO.FilePath -> ModuleBuilder -> L b m ()
-writeBitcodeToFile path builder = 
+writeBitcodeToFile path builder =
   withModule builder $
-  liftBase . errorToIO 'LL.writeBitcodeToFile . 
+  liftBase . errorToIO 'LL.writeBitcodeToFile .
   LL.writeBitcodeToFile (LL.File path)
 
 writeTargetAssemblyToFile :: (MonadBaseControl IO m, IsBackendVoid b ~ False)
@@ -188,17 +188,17 @@ writeTargetAssemblyToFile :: (MonadBaseControl IO m, IsBackendVoid b ~ False)
 writeTargetAssemblyToFile path builder =
   do tm <- getTargetMachine
      withModule builder $
-       liftBase . errorToIO 'LL.writeTargetAssemblyToFile . 
+       liftBase . errorToIO 'LL.writeTargetAssemblyToFile .
        LL.writeTargetAssemblyToFile tm (LL.File path)
-  
+
 writeObjectToFile :: (MonadBaseControl IO m, IsBackendVoid b ~ False)
                      => IO.FilePath -> ModuleBuilder -> L b m ()
 writeObjectToFile path builder =
   do tm <- getTargetMachine
      withModule builder $
-       liftBase . errorToIO 'LL.writeObjectToFile . 
+       liftBase . errorToIO 'LL.writeObjectToFile .
        LL.writeObjectToFile tm (LL.File path)
-  
+
 newtype ExecutableModule = ExecutableModule (LL.ExecutableModule LL.MCJIT)
 
 optNum :: OptimizationLevel -> Word
@@ -221,21 +221,21 @@ jitCompile mb f =
                (Just $ optNum $ settingsOptimizationLevel settings,
                 Just $ settingsCodeModel settings,
                 Just $ noFramePointerElimination $ settingsOptions settings,
-                Just $ enableFastInstructionSelection $ 
+                Just $ enableFastInstructionSelection $
                 settingsOptions settings)
              Nothing -> (Nothing, Nothing, Nothing, Nothing)
      withModule mb
        (\mod1 ->
          liftBaseOp
-         (catchCaller 'LL.withMCJIT $ 
+         (catchCaller 'LL.withMCJIT $
           LL.withMCJIT context optLevel model noFpe enableFis)
          (\mcjit ->
            liftBaseOp
-           (catchCaller 'LL.withModuleInEngine $ 
+           (catchCaller 'LL.withModuleInEngine $
             LL.withModuleInEngine mcjit mod1)
            (f . ExecutableModule)))
-         
-jitGetFunction :: (MonadBaseControl IO m) 
+
+jitGetFunction :: (MonadBaseControl IO m)
                   => ExecutableModule -> AST.Name -> L b m (Maybe (FunPtr ()))
-jitGetFunction (ExecutableModule e) name = 
+jitGetFunction (ExecutableModule e) name =
   liftBase $ catchInternal 'LL.getFunction $ LL.getFunction e name

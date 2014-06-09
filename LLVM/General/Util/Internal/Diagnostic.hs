@@ -3,10 +3,10 @@
 module LLVM.General.Util.Internal.Diagnostic (
   LLVMError(..),
   llvmErrorFunctionName, llvmErrorString,
-  
+
   errorToIO, diagToIO, catchInternal, catchCaller, catchCallerError,
   catchCallerDiag,
-  
+
   module LLVM.General.Diagnostic
 ) where
 
@@ -22,7 +22,7 @@ data LLVMError = LLVMError Name String
                | LLVMInternalError Name String
                | LLVMDiagnostic Name Diagnostic
                deriving (Eq,Ord,Show,Typeable)
-                          
+
 instance Exception LLVMError
 
 llvmErrorFunctionName :: LLVMError -> Name
@@ -38,14 +38,14 @@ llvmErrorString (LLVMDiagnostic _ diag) = diagnosticDisplay diag
 errorToIO :: Name -> ErrorT String IO a -> IO a
 errorToIO funcName m =
   do result <- catchInternal funcName $ runErrorT m
-     case result of 
+     case result of
        Left str -> throwIO (LLVMError funcName str)
        Right x -> return x
-       
+
 diagToIO :: Name -> ErrorT (Either String Diagnostic) IO a -> IO a
 diagToIO funcName m =
   do result <- catchInternal funcName $ runErrorT m
-     case result of 
+     case result of
        Left (Left str) -> throwIO (LLVMError funcName str)
        Left (Right diag) -> throwIO (LLVMDiagnostic funcName diag)
        Right x -> return x
@@ -53,7 +53,7 @@ diagToIO funcName m =
 catchInternal :: (MonadBaseControl IO m) => Name -> m a -> m a
 catchInternal funcName m =
   catch m catcher
-  where catcher e = 
+  where catcher e =
           if isUserError e
           then throwIO (LLVMInternalError funcName (ioeGetErrorString e))
           else throwIO e
@@ -63,10 +63,10 @@ newtype AntiCatch = AntiCatch IOError
 
 instance Exception AntiCatch
 
-catchCaller :: (MonadBaseControl IO m) => 
+catchCaller :: (MonadBaseControl IO m) =>
                Name
-               -> ((a -> m b) -> m b) 
-               -> (a -> m b) 
+               -> ((a -> m b) -> m b)
+               -> (a -> m b)
                -> m b
 
 catchCaller funcName f g =
@@ -78,28 +78,28 @@ catchCaller funcName f g =
           then throwIO (LLVMInternalError funcName (ioeGetErrorString e))
           else throwIO e
 
-catchCallerError :: (MonadBaseControl IO m) => 
+catchCallerError :: (MonadBaseControl IO m) =>
                     Name
-                    -> ((a -> m b) -> ErrorT String m b) 
-                    -> (a -> m b) 
+                    -> ((a -> m b) -> ErrorT String m b)
+                    -> (a -> m b)
                     -> m b
 
 catchCallerError funcName f g =
   catchCaller funcName f' g
-  where f' g' = 
+  where f' g' =
           do result <- (runErrorT . f) g'
              case result of
                Left str -> throwIO (LLVMError funcName str)
                Right x -> return x
-               
-catchCallerDiag :: (MonadBaseControl IO m) => 
+
+catchCallerDiag :: (MonadBaseControl IO m) =>
                     Name
-                    -> ((a -> m b) -> ErrorT (Either String Diagnostic) m b) 
-                    -> (a -> m b) 
+                    -> ((a -> m b) -> ErrorT (Either String Diagnostic) m b)
+                    -> (a -> m b)
                     -> m b
 catchCallerDiag funcName f g =
   catchCaller funcName f' g
-  where f' g' = 
+  where f' g' =
           do result <- (runErrorT . f) g'
              case result of
                Left (Left str) -> throwIO (LLVMError funcName str)

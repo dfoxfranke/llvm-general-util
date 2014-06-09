@@ -1,9 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude, FlexibleContexts, TemplateHaskell #-}
 {-# OPTIONS_GHC -Wall #-}
-module LLVM.General.Util.LibraryInfo( 
+module LLVM.General.Util.LibraryInfo(
   getLibraryFunction, getLibraryFunctionName,
   setLibraryFunctionAvailableWithName,
-  
+
   module LLVM.General.Target.LibraryFunction
   ) where
 
@@ -23,9 +23,9 @@ getLibraryFunction name =
      liftBase $ catchInternal 'T.getLibraryFunction $
        T.getLibraryFunction li name
 
-getLibraryFunctionName :: (MonadBaseControl IO m) 
+getLibraryFunctionName :: (MonadBaseControl IO m)
                           => LibraryFunction -> L b m String
-getLibraryFunctionName lf = 
+getLibraryFunctionName lf =
   do li <- getLibraryInfo
      liftBase $ catchInternal 'T.getLibraryFunctionName $
        T.getLibraryFunctionName li lf

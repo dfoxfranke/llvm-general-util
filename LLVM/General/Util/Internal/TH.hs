@@ -11,7 +11,7 @@ import GHC.Generics
 import Language.Haskell.TH
 mkDconName :: String -> String -> Name
 mkDconName prefix [] = mkName prefix
-mkDconName prefix (x:xs) = 
+mkDconName prefix (x:xs) =
   mkName $ prefix ++ normalizeHead x : (normalizeTail <$> xs)
   where normalizeHead x
           | isAlpha x || isDigit x = toUpper x
@@ -28,14 +28,14 @@ genStrEnum tycon dconPrefix strs defaultStr wantParse =
      let parseName = mkName $ "parse" ++ tycon
      let showName  = mkName $ "show" ++ tycon
      let dconNames = mkDconName dconPrefix <$> strs
-     dataDecl <- 
+     dataDecl <-
        dataD (cxt []) tyconName []
        (flip normalC [] <$> dconNames)
        [''Eq, ''Ord, ''Show, ''Enum, ''Bounded, ''Typeable, ''Data, ''Generic]
      parseDecl <- sigD parseName [t|String -> Maybe $(conT tyconName)|]
      parseDef <-
        funD parseName
-       [clause 
+       [clause
         [varP inputStr]
         (guardedB $
          [normalGE [|$(varE lowerStr) == $(litE $ stringL (map toLower str))|]
@@ -46,7 +46,7 @@ genStrEnum tycon dconPrefix strs defaultStr wantParse =
      showDecl <- sigD showName [t|Maybe $(conT tyconName) -> String|]
      showDef <-
        funD showName $
-       [clause [conP 'Just [conP dconName []]] 
+       [clause [conP 'Just [conP dconName []]]
                (normalB (litE (stringL str))) []
         | str <- strs | dconName <- dconNames] ++
        [clause [conP 'Nothing []] (normalB (litE (stringL defaultStr))) []]

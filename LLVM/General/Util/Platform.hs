@@ -3,101 +3,101 @@
 module LLVM.General.Util.Platform (
   -- * Backends, targets and subtargets
   Backend(..), IsBackendVoid,
-  
+
   -- ** Targets
   -- $target
-  
+
   Target(..),
   parseTarget, showTarget,
-  
+
   TaggedTarget(..), untagTarget,
-  
+
   -- ** CPUs & Features
   -- $cpuFeature
-  
-  BackendCpu, 
+
+  BackendCpu,
   BackendFeature, parseFeatureString, showFeatureString,
-  
+
   -- ** Subtargets
   Subtarget(..),
   subtargetTarget, subtargetCpu, subtargetFeatures,
   subtargetCpuString, subtargetFeatureStrings,
-  
+
   AnySubtarget(..),
   parseAnySubtarget, anySubtargetTarget, anySubtargetCpu, anySubtargetFeatures,
-  
+
   -- ** CPUs and Features for specific backends
   -- *** AArch64 backend
   Aarch64Cpu(..), parseAarch64Cpu, showAarch64Cpu,
   Aarch64Feature(..), parseAarch64Feature, showAarch64Feature,
-  
+
   -- *** ARM backend
   ArmCpu(..), parseArmCpu, showArmCpu,
   ArmFeature(..), parseArmFeature, showArmFeature,
-  
+
   -- *** CPP backend
   -- | The CPP backend ignores @-mcpu=@ and @-mattr@, so accordingly
   -- there is no @CppCpu@ or @CppFeature@ type.
-  
+
   -- *** Hexagon backend
   HexagonCpu(..), parseHexagonCpu, showHexagonCpu,
   HexagonFeature(..), parseHexagonFeature, showHexagonFeature,
-                                           
+
   -- *** MIPS backend
   MipsCpu(..), parseMipsCpu, showMipsCpu,
   MipsFeature(..), parseMipsFeature, showMipsFeature,
-  
+
   -- *** MSP430 backend
   Msp430Cpu(..), parseMsp430Cpu, showMsp430Cpu,
   Msp430Feature(..), parseMsp430Feature, showMsp430Feature,
-  
+
   -- *** NVptx backend
   NvptxCpu(..), parseNvptxCpu, showNvptxCpu,
   NvptxFeature(..), parseNvptxFeature, showNvptxFeature,
-  
+
   -- *** PPC backend
   PpcCpu(..), parsePpcCpu, showPpcCpu,
   PpcFeature(..), parsePpcFeature, showPpcFeature,
-  
+
   -- *** R600 backend
   R600Cpu(..), parseR600Cpu, showR600Cpu,
   R600Feature(..), parseR600Feature, showR600Feature,
-  
+
   -- *** SPARC backend
   SparcCpu(..), parseSparcCpu, showSparcCpu,
   SparcFeature(..), parseSparcFeature, showSparcFeature,
-  
+
   -- *** SystemZ backend
   SystemzCpu(..), parseSystemzCpu, showSystemzCpu,
   SystemzFeature(..), parseSystemzFeature, showSystemzFeature,
-  
+
   -- *** x86 backend
   X86Cpu(..), parseX86Cpu, showX86Cpu,
   X86Feature(..), parseX86Feature, showX86Feature,
-  
+
   -- *** XCore backend
   XcoreCpu(..), parseXcoreCpu, showXcoreCpu,
-  
-  -- * Triples  
+
+  -- * Triples
   Triple(..), parseTriple, showTriple,
-                           
+
   -- ** Architectures
   Architecture(..), parseArchitecture, showArchitecture,
   architectureToTarget,
-  
+
   -- ** Vendors
   Vendor(..), parseVendor, showVendor,
-                                       
+
   -- ** OSs
-  OS(..), parseOS, showOS, 
+  OS(..), parseOS, showOS,
   OSSuffix(..), showOSSuffix,
-  
+
   -- ** Environments
   Environment(..), parseEnvironment, showEnvironment,
-  
+
   -- ** Object formats
   Format(..), parseFormat, showFormat, defaultFormat,
-                           
+
   -- * Platforms
   Platform(..), AnyPlatform(..),
   anyPlatformSubtarget, anyPlatformTriple, mkAnyPlatform,
@@ -166,24 +166,24 @@ $(genStrEnum "Target" "Target"
    "xcore"] "" True)
 
 $(genStrEnum "Aarch64Cpu" "Aarch64Cpu" ["generic"] "" True)
-$(genStrEnum "Aarch64Feature" "Aarch64Feature" 
+$(genStrEnum "Aarch64Feature" "Aarch64Feature"
   ["crypto", "fp-armv8", "neon"] "" True)
-  
+
 $(genStrEnum "ArmCpu" "ArmCpu"
   ["arm1020t", "arm1022e", "arm10e", "arm10tdmi", "arm1136j-s", "arm1136jf-s",
    "arm1156t2-s", "arm1156t2f-s", "arm1176jz-s", "arm1176jzf-s", "arm710t",
    "arm720t", "arm7tdmi", "arm7tdmi-s", "arm8", "arm810", "arm9", "arm920",
    "arm920t", "arm922t", "arm926ej-s", "arm940t", "arm946e-s", "arm966e-s",
    "arm968e-s", "arm9e", "arm9tdmi", "cortex-a15", "cortex-a5", "cortex-a53",
-   "cortex-a57", "cortex-a8", "cortex-a9", "cortex-a9-mp", "cortex-m0", 
-   "cortex-m3", "cortex-m4", "cortex-r5", "ep9312", "generic", "iwmmxt", 
+   "cortex-a57", "cortex-a8", "cortex-a9", "cortex-a9-mp", "cortex-m0",
+   "cortex-m3", "cortex-m4", "cortex-r5", "ep9312", "generic", "iwmmxt",
    "mpcore", "mpcorenovfp", "strongarm", "strongarm110", "strongarm1100",
    "strongarm1110", "swift", "xscale"] "" True)
 $(genStrEnum "ArmFeature" "ArmFeature"
-  ["32bit", "a15", "a5", "a53", "a57", "a8", "a9", "aclass", "avoid-movs-shop", 
-   "avoid-partial-cpsr", "crc", "crypto", "d16", "db", "fp-armv8", 
+  ["32bit", "a15", "a5", "a53", "a57", "a8", "a9", "aclass", "avoid-movs-shop",
+   "avoid-partial-cpsr", "crc", "crypto", "d16", "db", "fp-armv8",
    "fp-only-sp", "fp16", "hwdiv", "hwdiv-arm", "mclass", "mp", "nacl-trap",
-   "neon", "neonfp", "noarm", "perfmon", "r5", "ras", "rclass", "slow-fp-brcc", 
+   "neon", "neonfp", "noarm", "perfmon", "r5", "ras", "rclass", "slow-fp-brcc",
    "slowfpvmlx", "swift", "t2dsp", "t2xtpk", "thumb-mode", "thumb2",
    "trustzone", "v4t", "v5t", "v5te", "v6", "v6m", "v6t2", "v7", "v8", "vfp2",
    "vfp3", "vfp4", "virtualization", "vmlx-forwarding"] "" True)
@@ -196,7 +196,7 @@ $(genStrEnum "HexagonFeature" "HexagonFeature"
 $(genStrEnum "MipsCpu" "MipsCpu"
   ["mips16", "mips32", "mips32r2", "mips64", "mips64r2"] "" True)
 $(genStrEnum "MipsFeature" "MipsFeature"
-  ["FPIdx", "bitcount", "condmov", "dsp", "dspr2", "eabi", "fp64", 
+  ["FPIdx", "bitcount", "condmov", "dsp", "dspr2", "eabi", "fp64",
    "gp64", "micromips", "mips16", "mips32", "mips32r2", "mips64", "mips64r2",
    "msa", "n32", "n64", "o32", "seinreg", "single-float", "swap", "vfpu"]
    "" True)
@@ -210,9 +210,9 @@ $(genStrEnum "NvptxFeature" "NvptxFeature"
   ["ptx30", "ptx31", "sm_20", "sm_21", "sm_30", "sm_35"] "" True)
 
 $(genStrEnum "PpcCpu" "PpcCpu"
-  ["440", "450", "601", "602", "603", "603e", "603ev", "604", "604e", "620", 
+  ["440", "450", "601", "602", "603", "603e", "603ev", "604", "604e", "620",
    "7400", "7450", "750", "970", "a2", "a2q", "e500mc", "e5500", "g3", "g4",
-   "g4+", "g5", "generic", "ppc", "ppc64", "ppc64le", "pwr3", "pwr4", "pwr5", 
+   "g4+", "g5", "generic", "ppc", "ppc64", "ppc64le", "pwr3", "pwr4", "pwr5",
    "pwr5x", "pwr6", "pwr6x", "pwr7"] "" True)
 $(genStrEnum "PpcFeature" "PpcFeature"
   ["64bit", "64bitregs", "altivec", "booke", "fcpsgn", "fpcvt", "fprnd", "fre",
@@ -229,7 +229,7 @@ $(genStrEnum "R600Feature" "R600Feature"
    "NORTHERN_ISLANDS", "R600", "R600ALUInst", "R700", "SEA_ISLANDS",
    "SOUTHERN_ISLANDS", "caymanISA", "disable-ifcvt",
    "disable-irstructurizer", "fetch16", "fetch8", "fp64"] "" True)
-  
+
 $(genStrEnum "SparcCpu" "SparcCpu"
   ["f934", "generic", "hypersparc", "sparclet", "sparclite", "sparclite86x",
    "supersparc", "tsc701", "ultrasparc", "ultrasparc3", "ultrasparc3-vis",
@@ -264,7 +264,7 @@ $(genStrEnum "X86Feature" "X86Feature"
    "vector-unaligned-mem", "xop"] "" True)
 
 $(genStrEnum "XcoreCpu" "XcoreCpu" ["generic"] "" True)
-                       
+
 -- | 'TaggedTarget' extends 'Target' with a phantom type indicating which
 -- 'Backend' it belongs to.
 data TaggedTarget :: Backend -> * where
@@ -297,7 +297,7 @@ instance Eq (TaggedTarget b) where
 
 instance Ord (TaggedTarget b) where
   compare x y = compare (untagTarget x) (untagTarget y)
-  
+
 instance Show (TaggedTarget b) where
   show x = "T" ++ show (untagTarget x)
 
@@ -345,7 +345,7 @@ type family BackendCpu (b :: Backend) where
   BackendCpu BackendSystemz = SystemzCpu
   BackendCpu BackendX86 = X86Cpu
   BackendCpu BackendXcore = XcoreCpu
-  
+
 type family BackendFeature (b :: Backend) where
   BackendFeature BackendAarch64 = Aarch64Feature
   BackendFeature BackendArm = ArmFeature
@@ -360,18 +360,18 @@ type family BackendFeature (b :: Backend) where
   BackendFeature BackendSystemz = SystemzFeature
   BackendFeature BackendX86 = X86Feature
   BackendFeature BackendXcore = Void
-  
+
 -- | Parse an @-mattr=@ argument string like @"+foo,+bar,-baz"@ into a 'Map'
 -- like @fromList [("foo",True), ("bar",True), ("baz",False)]@.
 parseFeatureString :: String -> Map String Bool
-parseFeatureString features = 
+parseFeatureString features =
   mapFromList $ classify <$>
   splitOn "," features
   where
     classify ('+':s) = (s,True)
     classify ('-':s) = (s,False)
     classify s = (s,True)
-    
+
 -- | 'showFeatureString' is the right-inverse of 'parseFeatureString'.
 showFeatureString :: Map String Bool -> String
 showFeatureString features =
@@ -384,11 +384,11 @@ showFeatureString features =
 -- target's 'Backend'.
 data Subtarget :: Backend -> * where
   SubtargetAarch64 :: TaggedTarget BackendAarch64
-                      -> Maybe Aarch64Cpu 
+                      -> Maybe Aarch64Cpu
                       -> Map Aarch64Feature Bool
                       -> Subtarget BackendAarch64
   SubtargetArm :: TaggedTarget BackendArm
-                  -> Maybe ArmCpu 
+                  -> Maybe ArmCpu
                   -> Map ArmFeature Bool
                   -> Subtarget BackendArm
   SubtargetCpp :: TaggedTarget BackendCpp
@@ -412,7 +412,7 @@ data Subtarget :: Backend -> * where
   SubtargetR600 :: TaggedTarget BackendR600
                    -> Maybe R600Cpu
                    -> Map R600Feature Bool
-                   -> Subtarget BackendR600  
+                   -> Subtarget BackendR600
   SubtargetPpc :: TaggedTarget BackendPpc
                   -> Maybe PpcCpu
                   -> Map PpcFeature Bool
@@ -432,7 +432,7 @@ data Subtarget :: Backend -> * where
   SubtargetXcore :: TaggedTarget BackendXcore
                     -> Maybe XcoreCpu
                     -> Subtarget BackendXcore
-                  
+
 deriving instance (Eq (Subtarget b))
 deriving instance (Show (Subtarget b))
 deriving instance (Typeable Subtarget)
@@ -498,37 +498,37 @@ subtargetFeatures (SubtargetX86 _ _ f) = f
 subtargetFeatures (SubtargetXcore _ _) = mempty
 
 subtargetFeatureStrings :: Subtarget b -> Map String Bool
-subtargetFeatureStrings (SubtargetAarch64 _ _ f) = 
+subtargetFeatureStrings (SubtargetAarch64 _ _ f) =
   mapKeys (showAarch64Feature . Just) f
-subtargetFeatureStrings (SubtargetArm _ _ f) = 
+subtargetFeatureStrings (SubtargetArm _ _ f) =
   mapKeys (showArmFeature . Just) f
-subtargetFeatureStrings (SubtargetCpp _ ) = 
+subtargetFeatureStrings (SubtargetCpp _ ) =
   mempty
-subtargetFeatureStrings (SubtargetHexagon _ _ f) = 
+subtargetFeatureStrings (SubtargetHexagon _ _ f) =
   mapKeys (showHexagonFeature . Just) f
-subtargetFeatureStrings (SubtargetMips _ _ f) = 
+subtargetFeatureStrings (SubtargetMips _ _ f) =
   mapKeys (showMipsFeature . Just) f
-subtargetFeatureStrings (SubtargetMsp430 _ _ f) = 
+subtargetFeatureStrings (SubtargetMsp430 _ _ f) =
   mapKeys (showMsp430Feature . Just) f
-subtargetFeatureStrings (SubtargetNvptx _ _ f) = 
+subtargetFeatureStrings (SubtargetNvptx _ _ f) =
   mapKeys (showNvptxFeature . Just) f
-subtargetFeatureStrings (SubtargetR600 _ _ f) = 
+subtargetFeatureStrings (SubtargetR600 _ _ f) =
   mapKeys (showR600Feature . Just) f
-subtargetFeatureStrings (SubtargetPpc _ _ f) = 
+subtargetFeatureStrings (SubtargetPpc _ _ f) =
   mapKeys (showPpcFeature . Just) f
-subtargetFeatureStrings (SubtargetSparc _ _ f) = 
+subtargetFeatureStrings (SubtargetSparc _ _ f) =
   mapKeys (showSparcFeature . Just) f
-subtargetFeatureStrings (SubtargetSystemz _ _ f) = 
+subtargetFeatureStrings (SubtargetSystemz _ _ f) =
   mapKeys (showSystemzFeature . Just) f
-subtargetFeatureStrings (SubtargetX86 _ _ f) = 
+subtargetFeatureStrings (SubtargetX86 _ _ f) =
   mapKeys (showX86Feature . Just) f
 subtargetFeatureStrings (SubtargetXcore _ _) = mempty
 
-data AnySubtarget = 
-  forall (b :: Backend). 
-  (IsBackendVoid b ~ False) => 
+data AnySubtarget =
+  forall (b :: Backend).
+  (IsBackendVoid b ~ False) =>
   AnySubtarget (Subtarget b)
-  
+
 instance Eq AnySubtarget where
   AnySubtarget x@(SubtargetAarch64 _ _ _) == AnySubtarget y@(SubtargetAarch64 _ _ _) = x == y
   AnySubtarget x@(SubtargetArm _ _ _) == AnySubtarget y@(SubtargetArm _ _ _) = x == y
@@ -548,12 +548,12 @@ instance Eq AnySubtarget where
 deriving instance Show AnySubtarget
 deriving instance Typeable AnySubtarget
 
- 
+
 mapKeysMaybe :: (Ord k1, Ord k2) => (k1 -> Maybe k2) -> Map k1 v -> Map k2 v
 mapKeysMaybe f =
-  mapFromList . 
-  map (\(Just k,v) -> (k,v)) . 
-  filter (isJust . fst) . 
+  mapFromList .
+  map (\(Just k,v) -> (k,v)) .
+  filter (isJust . fst) .
   map (\(k,v) -> (f k, v)) .
   mapToList
 
@@ -666,7 +666,7 @@ $(genStrEnum "Architecture" "Arch"
 
 parseArchitecture :: String -> Maybe Architecture
 parseArchitecture arch
-  | x `elem` ["i386","i486","i586","i686","i786","i886","i986"] 
+  | x `elem` ["i386","i486","i586","i686","i786","i886","i986"]
                                               = Just ArchI386
   | x `elem` ["amd64","x86_64","x86_64h"]     = Just ArchX86_64
   | x == "powerpc"                            = Just ArchPowerpc
@@ -736,7 +736,7 @@ architectureToTarget Nothing = TargetCpp
 $(genStrEnum "Vendor" "Vendor"
   ["apple", "pc", "scei", "bgp", "bgq", "freescale", "ibm", "nvidia"]
   "unknown" True)
-  
+
 data OS = OSAuroraux
         | OSCygwin
         | OSDarwin
@@ -765,13 +765,13 @@ data OS = OSAuroraux
 
 newtype OSSuffix = OSSuffix String
                    deriving (Eq,Ord,Typeable,Data,Generic)
-                            
+
 showOSSuffix :: OSSuffix -> String
 showOSSuffix (OSSuffix s) = s
-                            
+
 instance Show OSSuffix where
   show = show . showOSSuffix
-  
+
 instance IsString OSSuffix where
   fromString s = assert legalSuffix (OSSuffix s)
     where legalSuffix = all (\c -> isPrint c && c /= '-') s
@@ -804,7 +804,7 @@ showOS (Just (OSCuda,x)) = "cuda" ++ showOSSuffix x
 showOS (Just (OSNvcl,x)) = "nvcl" ++ showOSSuffix x
 
 parseOS :: String -> Maybe (OS,OSSuffix)
-parseOS os 
+parseOS os
   | "auroraux" `isPrefixOf` x  = Just (OSAuroraux, fromString $ drop 8 x)
   | "cygwin" `isPrefixOf` x    = Just (OSCygwin, fromString $ drop 6 x)
   | "darwin" `isPrefixOf` x    = Just (OSDarwin, fromString $ drop 6 x)
@@ -851,7 +851,7 @@ parseEnvironment env
   | "cygnus" `isPrefixOf` x    = Just EnvironmentCygnus
   | otherwise                  = Nothing
   where x = toLower env
-                          
+
 $(genStrEnum "Format" "Format" ["elf", "coff", "macho"] "unknown" False)
 
 parseFormat :: String -> Maybe Format
@@ -875,31 +875,31 @@ defaultFormat _                    = Just FormatElf
 data Triple = Triple { tripleArchitecture :: Maybe Architecture,
                        tripleVendor :: Maybe Vendor,
                        tripleOS :: Maybe (OS, OSSuffix),
-                       tripleEnvironment :: Maybe Environment, 
+                       tripleEnvironment :: Maybe Environment,
                        tripleFormat :: Maybe Format }
               deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
 parseTriple :: String -> Triple
-parseTriple x = 
+parseTriple x =
   let triple = parseTriple' (splitOn "-" x) in
   if (tripleFormat triple) == Nothing
   then triple { tripleFormat = defaultFormat (tripleOS triple) }
   else triple
   where parseTriple' [] = Triple Nothing Nothing Nothing Nothing Nothing
-        parseTriple' [a] = 
+        parseTriple' [a] =
           Triple (parseArchitecture a) Nothing Nothing Nothing Nothing
         parseTriple' [a,b]
           | toLower b == "unknown" || isJust (parseVendor b) =
-              Triple (parseArchitecture a) (parseVendor b) 
+              Triple (parseArchitecture a) (parseVendor b)
               Nothing Nothing Nothing
           | isJust (parseOS b) =
               Triple (parseArchitecture a) Nothing (parseOS b)
               Nothing Nothing
-          | otherwise = 
+          | otherwise =
               Triple (parseArchitecture a) Nothing Nothing Nothing Nothing
         parseTriple' [a,b,c]
           | toLower b == "unknown" || isJust (parseVendor b) =
-              Triple (parseArchitecture a) (parseVendor b) (parseOS c) 
+              Triple (parseArchitecture a) (parseVendor b) (parseOS c)
               Nothing Nothing
           | isJust (parseOS b) && isJust (parseFormat c) =
               Triple (parseArchitecture a) Nothing (parseOS b) Nothing
@@ -907,19 +907,19 @@ parseTriple x =
           | isJust (parseOS b) =
               Triple (parseArchitecture a) Nothing (parseOS b)
               (parseEnvironment c) (defaultFormat (parseOS b))
-          | otherwise = Triple (parseArchitecture a) Nothing (parseOS c) 
+          | otherwise = Triple (parseArchitecture a) Nothing (parseOS c)
                         Nothing Nothing
         parseTriple' [a,b,c,d]
           | toLower b == "unknown" || isJust (parseVendor b) =
               Triple (parseArchitecture a) (parseVendor b) (parseOS c)
               (parseEnvironment d) Nothing
           | isJust (parseOS b) =
-              Triple (parseArchitecture a) Nothing (parseOS b)  
+              Triple (parseArchitecture a) Nothing (parseOS b)
               (parseEnvironment c) (parseFormat d)
-          | otherwise = 
+          | otherwise =
               Triple (parseArchitecture a) Nothing (parseOS c)
                      (parseEnvironment d) Nothing
-        parseTriple' [a,b,c,d,e] = 
+        parseTriple' [a,b,c,d,e] =
           Triple (parseArchitecture a) (parseVendor b) (parseOS c)
                  (parseEnvironment d) (parseFormat e)
         parseTriple' x' = parseTriple' (take 5 x')
@@ -928,29 +928,29 @@ showTriple :: Triple -> String
 showTriple t
   | tripleEnvironment t == Nothing &&
     tripleFormat t == defaultFormat (tripleOS t) =
-      showArchitecture (tripleArchitecture t) ++ "-" ++ 
-      showVendor (tripleVendor t) ++ "-" ++ 
+      showArchitecture (tripleArchitecture t) ++ "-" ++
+      showVendor (tripleVendor t) ++ "-" ++
       showOS (tripleOS t)
   | tripleFormat t == defaultFormat (tripleOS t) =
-    showArchitecture (tripleArchitecture t) ++ "-" ++ 
-    showVendor (tripleVendor t) ++ "-" ++ 
+    showArchitecture (tripleArchitecture t) ++ "-" ++
+    showVendor (tripleVendor t) ++ "-" ++
     showOS (tripleOS t) ++ "-" ++
     showEnvironment (tripleEnvironment t)
   | otherwise =
-    showArchitecture (tripleArchitecture t) ++ "-" ++ 
-    showVendor (tripleVendor t) ++ "-" ++ 
+    showArchitecture (tripleArchitecture t) ++ "-" ++
+    showVendor (tripleVendor t) ++ "-" ++
     showOS (tripleOS t) ++ "-" ++
     showEnvironment (tripleEnvironment t) ++ "-" ++
     showFormat (tripleFormat t)
 
-data Platform (b :: Backend) = 
-  Platform { 
-    platformSubtarget :: (Subtarget b), 
+data Platform (b :: Backend) =
+  Platform {
+    platformSubtarget :: (Subtarget b),
     platformTriple :: Triple }
   deriving (Eq,Show,Typeable)
 
-data AnyPlatform = 
-  forall (b :: Backend). 
+data AnyPlatform =
+  forall (b :: Backend).
   (IsBackendVoid b ~ False) =>
   AnyPlatform (Platform b)
 
@@ -974,8 +974,8 @@ mkAnyPlatform (AnySubtarget s) t = AnyPlatform (Platform s t)
 mkAnyPlatformFromTriple :: Triple -> AnyPlatform
 mkAnyPlatformFromTriple t =
   case architectureToTarget (tripleArchitecture t) of
-    TargetAarch64 -> 
-      AnyPlatform $ 
+    TargetAarch64 ->
+      AnyPlatform $
       Platform (SubtargetAarch64 TTargetAarch64 Nothing mempty) t
     TargetArm ->
       AnyPlatform $
@@ -1045,15 +1045,15 @@ mkAnyPlatformFromTriple t =
 -- default (i.e., when no @-march=/-mcpu=/-mattr=/-mtriple=@ arguments are
 -- provided).
 getDefaultPlatform :: IO AnyPlatform
-getDefaultPlatform = 
-  mkAnyPlatformFromTriple <$> parseTriple <$> 
+getDefaultPlatform =
+  mkAnyPlatformFromTriple <$> parseTriple <$>
   catchInternal 'T.getDefaultTargetTriple T.getDefaultTargetTriple
-  
+
 -- | Returns a platform representative of the environment in which the
 -- calling process is running.
 getNativePlatform :: IO AnyPlatform
 getNativePlatform =
-  do triple <- parseTriple <$> 
+  do triple <- parseTriple <$>
                catchInternal  'T.getProcessTargetTriple T.getProcessTargetTriple
      cpuName <- catchInternal  'T.getHostCPUName T.getHostCPUName
      cpuFeatureSet <- catchInternal 'T.getHostCPUFeatures T.getHostCPUFeatures
