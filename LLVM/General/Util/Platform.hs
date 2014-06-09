@@ -660,8 +660,8 @@ anySubtargetFeatures (AnySubtarget t) = subtargetFeatureStrings t
 
 $(genStrEnum "Architecture" "Arch"
   ["aarch64", "arm", "hexagon", "mips", "mipsel", "mips64",  "mips64el",
-   "msp430", "ppc64", "ppc64le", "ppc", "r600", "sparc", "sparcv9",
-   "s390x", "tce", "thumb", "i386", "x86_64", "xcore", "nvptx",
+   "msp430", "powerpc64", "powerpc64le", "powerpc", "r600", "sparc",
+   "sparcv9", "s390x", "tce", "thumb", "i386", "x86_64", "xcore", "nvptx",
    "nvptx64", "le32", "amdil", "spir", "spir64"] "unknown" False)
 
 parseArchitecture :: String -> Maybe Architecture
@@ -669,14 +669,15 @@ parseArchitecture arch
   | x `elem` ["i386","i486","i586","i686","i786","i886","i986"] 
                                               = Just ArchI386
   | x `elem` ["amd64","x86_64","x86_64h"]     = Just ArchX86_64
-  | x == "powerpc"                            = Just ArchPpc
-  | x `elem` ["powerpc64","ppu"]              = Just ArchPpc64
-  | x == "powerpc64le"                        = Just ArchPpc64le
+  | x == "powerpc"                            = Just ArchPowerpc
+  | x `elem` ["powerpc64","ppu"]              = Just ArchPowerpc64
+  | x == "powerpc64le"                        = Just ArchPowerpc64le
   | x == "aarch64"                            = Just ArchAarch64
 --  | x == "aarch64_be"                         = Just ArchAarch64_be
   | x `elem` ["arm","xscale"]                 = Just ArchArm
   | "armv" `isPrefixOf` x                     = Just ArchArm
 --  | x == "armeb"                              = Just ArchArmeb
+  | x == "thumb"                              = Just ArchThumb
   | "thumbv" `isPrefixOf` x                   = Just ArchThumb
 --  | x == "thumeb"                             = Just ArchThumbeb
 --  | "thumbebv" `isPrefixOf` x                 = Just ArchThumbeb
@@ -712,14 +713,14 @@ architectureToTarget (Just ArchMipsel) = TargetMipsel
 architectureToTarget (Just ArchMips64) = TargetMips64
 architectureToTarget (Just ArchMips64el) = TargetMips64el
 architectureToTarget (Just ArchMsp430) = TargetMsp430
-architectureToTarget (Just ArchPpc64) = TargetPpc64
-architectureToTarget (Just ArchPpc64le) = TargetPpc64le
-architectureToTarget (Just ArchPpc) = TargetPpc32
+architectureToTarget (Just ArchPowerpc64) = TargetPpc64
+architectureToTarget (Just ArchPowerpc64le) = TargetPpc64le
+architectureToTarget (Just ArchPowerpc) = TargetPpc32
 architectureToTarget (Just ArchR600) = TargetR600
 architectureToTarget (Just ArchSparc) = TargetSparc
 architectureToTarget (Just ArchSparcv9) = TargetSparcv9
 architectureToTarget (Just ArchS390x) = TargetSystemz
-architectureToTarget (Just ArchTce) = TargetThumb
+architectureToTarget (Just ArchTce) = TargetCpp
 architectureToTarget (Just ArchThumb) = TargetThumb
 architectureToTarget (Just ArchI386) = TargetX86
 architectureToTarget (Just ArchX86_64) = TargetX86_64
